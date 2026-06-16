@@ -43,6 +43,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
+    'user',
+    'platforms',
+    'games',
+    'game_platform',
+    'libraries',
+    'posts',
+    'post_comment',
+    'game_comment',
+    'user_platform',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -128,4 +138,4 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'api.User'
+AUTH_USER_MODEL = 'user.User'

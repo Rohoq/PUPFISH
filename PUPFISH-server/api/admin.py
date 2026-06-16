@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import Game, Platform, User, GameComment, UserPlatform, GamePlatform, GamesLibrary, Post, PostComment
+from games.models import Game
+from platforms.models import Platform
+from game_platform.models import GamePlatform
+from game_comment.models import GameComment
+from posts.models import Post
+from post_comment.models import PostComment
+from libraries.models import GamesLibrary
+from user.models import User
+from user_platform.models import UserPlatform
+
 
 admin.site.register(Game)
 admin.site.register(Platform)
