@@ -31,3 +31,11 @@ class GamesLibrary(models.Model):
         max_length=20,
         choices=STATUS_CHOICES
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "game"],
+                name="unique_user_game"
+            )
+        ]
