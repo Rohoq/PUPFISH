@@ -19,6 +19,11 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from user.views import RegisterView
 from games.views import GameListView
+from libraries.views import LibrariesViewSet
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'library', LibrariesViewSet, basename='library')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,6 +31,7 @@ urlpatterns = [
     path('api/login/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
     path('api/games/', GameListView.as_view()),
+    path('api/', include(router.urls)),
     path("api/users/", include("user.urls")),
     
 ]

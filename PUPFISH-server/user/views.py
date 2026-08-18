@@ -15,8 +15,10 @@ class RegisterView(generics.CreateAPIView):
 
 class UserLibraryView(ListAPIView):
     serializer_class = LibrariesSerializer
-
+    permission_classes = [AllowAny]
+    
     def get_queryset(self):
         return GamesLibrary.objects.filter(
             user_id=self.kwargs["id"]
+            
         )
