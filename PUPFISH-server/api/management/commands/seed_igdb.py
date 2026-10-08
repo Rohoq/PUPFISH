@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from games.models import Game
+
 import requests
 import os
 from datetime import datetime
@@ -28,7 +29,7 @@ def get_twitch_token(client_id, client_secret):
 
 
 # ---------------------------
-# IGDB fetch (single page)
+# IGDB fetch
 # ---------------------------
 def fetch_games(token, client_id, offset=0, limit=100):
     url = "https://api.igdb.com/v4/games"
@@ -39,7 +40,18 @@ def fetch_games(token, client_id, offset=0, limit=100):
     }
 
     body = f"""
-    fields name, first_release_date, cover.url;
+    fields
+        name,
+        first_release_date,
+        rating,
+        rating_count,
+        aggregated_rating,
+        aggregated_rating_count;
+    
+    where game_type = 0;
+    
+    sort rating_count desc;
+    
     limit {limit};
     offset {offset};
     """
@@ -57,9 +69,10 @@ def fetch_games(token, client_id, offset=0, limit=100):
 # Command
 # ---------------------------
 class Command(BaseCommand):
-    help = "Seed many games from IGDB"
+    help = "Seed games from IGDB"
 
     def handle(self, *args, **kwargs):
+
         client_id = os.getenv("CLIENT_ID")
         client_secret = os.getenv("CLIENT_SECRET")
 
@@ -67,19 +80,32 @@ class Command(BaseCommand):
             raise Exception("Missing CLIENT_ID or CLIENT_SECRET")
 
         self.stdout.write("Pobieram token...")
-        token = get_twitch_token(client_id, client_secret)
+
+        token = get_twitch_token(
+            client_id,
+            client_secret
+        )
 
         all_games = []
+
         offset = 0
         limit = 100
 
-        # 🔥 ile stron pobrać (np. 10 = ~1000 gier)
-        pages = 10
+        # Liczba stron
+        pages = 100
 
         for i in range(pages):
-            self.stdout.write(f"Pobieram offset {offset}...")
 
-            games = fetch_games(token, client_id, offset, limit)
+            self.stdout.write(
+                f"Pobieram offset {offset}..."
+            )
+
+            games = fetch_games(
+                token,
+                client_id,
+                offset,
+                limit
+            )
 
             if not games:
                 break
@@ -87,28 +113,55 @@ class Command(BaseCommand):
             all_games.extend(games)
 
             offset += limit
-            time.sleep(0.25)  # 🔥 ochrona przed rate limit
+
+            time.sleep(0.25)
 
         created = 0
         updated = 0
 
         for g in all_games:
+
             name = g.get("name")
+
             if not name:
                 continue
 
+            # ---------------------------
+            # Release date
+            # ---------------------------
             ts = g.get("first_release_date")
 
-            release_date = (
-                datetime.utcfromtimestamp(ts).date()
-                if ts
-                else datetime(1970, 1, 1).date()
+            if ts:
+                try:
+                    release_date = datetime.utcfromtimestamp(ts).date()
+                except (ValueError, OSError, OverflowError):
+                    release_date = datetime(1970, 1, 1).date()
+            else:
+                release_date = datetime(1970, 1, 1).date()
+
+            # ---------------------------
+            # Ratings
+            # ---------------------------
+            rating = g.get("rating")
+            rating_count = g.get("rating_count", 0)
+
+            aggregated_rating = g.get("aggregated_rating")
+            aggregated_rating_count = g.get(
+                "aggregated_rating_count",
+                0
             )
 
+            # ---------------------------
+            # Save
+            # ---------------------------
             obj, was_created = Game.objects.update_or_create(
                 name=name,
                 defaults={
                     "release_date": release_date,
+                    "rating": rating,
+                    "rating_count": rating_count,
+                    "aggregated_rating": aggregated_rating or 0,
+                    "aggregated_rating_count": aggregated_rating_count,
                 }
             )
 
@@ -119,6 +172,8 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"DONE — total: {len(all_games)}, created: {created}, updated: {updated}"
+                f"DONE — total: {len(all_games)}, "
+                f"created: {created}, "
+                f"updated: {updated}"
             )
         )
