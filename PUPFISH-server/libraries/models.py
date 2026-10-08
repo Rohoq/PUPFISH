@@ -29,5 +29,14 @@ class GamesLibrary(models.Model):
 
     state = models.CharField(
         max_length=20,
-        choices=STATUS_CHOICES
+        choices=STATUS_CHOICES,
+        default='playing'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "game"],
+                name="unique_user_game"
+            )
+        ]

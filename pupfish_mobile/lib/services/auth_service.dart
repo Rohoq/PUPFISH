@@ -3,8 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  //static const String baseUrl = 'http://10.0.2.2:8000/api'; // emulator
-   static const String baseUrl = 'http://localhost:8000/api'; // web
+  static const String baseUrl = 'http://192.168.2.186:8000/api'; // emulator
+   //static const String baseUrl = 'http://localhost:8000/api'; // web
 
   Future<bool> register(String username, String email, String password) async {
     final res = await http.post(
