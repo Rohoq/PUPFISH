@@ -5,9 +5,10 @@ class Game(models.Model):
     release_date = models.DateField()
     rating = models.FloatField(null=True, blank=True)
     rating_count = models.IntegerField(default=0)
-    aggregated_rating  = models.FloatField(default=0)
+    aggregated_rating = models.FloatField(default=0)
     aggregated_rating_count = models.IntegerField(default=0)
-    
+    steam_app_id = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+
     def __str__(self):
         return self.name
     
