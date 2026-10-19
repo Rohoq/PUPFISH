@@ -5,4 +5,4 @@ from .models import Platform
 class PlatformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Platform
-        fields = '__all__'
+        fields = "__all__"

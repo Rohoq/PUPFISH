@@ -11,4 +11,4 @@ class GameListView(generics.ListAPIView):
     permission_classes = [AllowAny]
 
     filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    search_fields = ["name"]

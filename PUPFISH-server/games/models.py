@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Game(models.Model):
     name = models.CharField(max_length=255)
     release_date = models.DateField()
@@ -11,5 +12,3 @@ class Game(models.Model):
 
     def __str__(self):
         return self.name
-    
- 

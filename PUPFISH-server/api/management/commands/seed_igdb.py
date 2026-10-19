@@ -3,29 +3,10 @@ from games.models import Game
 
 import requests
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 
-
-# ---------------------------
-# Twitch token
-# ---------------------------
-def get_twitch_token(client_id, client_secret):
-    url = "https://id.twitch.tv/oauth2/token"
-
-    data = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "grant_type": "client_credentials",
-    }
-
-    r = requests.post(url, data=data)
-    data = r.json()
-
-    if "access_token" not in data:
-        raise Exception(f"Twitch auth failed: {data}")
-
-    return data["access_token"]
+from games.services.igdb import get_twitch_token
 
 
 # ---------------------------
@@ -81,10 +62,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Pobieram token...")
 
-        token = get_twitch_token(
-            client_id,
-            client_secret
-        )
+        token = get_twitch_token(client_id, client_secret)
 
         all_games = []
 
@@ -96,16 +74,9 @@ class Command(BaseCommand):
 
         for i in range(pages):
 
-            self.stdout.write(
-                f"Pobieram offset {offset}..."
-            )
+            self.stdout.write(f"Pobieram offset {offset}...")
 
-            games = fetch_games(
-                token,
-                client_id,
-                offset,
-                limit
-            )
+            games = fetch_games(token, client_id, offset, limit)
 
             if not games:
                 break
@@ -133,7 +104,7 @@ class Command(BaseCommand):
 
             if ts:
                 try:
-                    release_date = datetime.utcfromtimestamp(ts).date()
+                    release_date = datetime.fromtimestamp(ts, tz=timezone.utc).date()
                 except (ValueError, OSError, OverflowError):
                     release_date = datetime(1970, 1, 1).date()
             else:
@@ -146,10 +117,7 @@ class Command(BaseCommand):
             rating_count = g.get("rating_count", 0)
 
             aggregated_rating = g.get("aggregated_rating")
-            aggregated_rating_count = g.get(
-                "aggregated_rating_count",
-                0
-            )
+            aggregated_rating_count = g.get("aggregated_rating_count", 0)
 
             # ---------------------------
             # Save
@@ -162,7 +130,7 @@ class Command(BaseCommand):
                     "rating_count": rating_count,
                     "aggregated_rating": aggregated_rating or 0,
                     "aggregated_rating_count": aggregated_rating_count,
-                }
+                },
             )
 
             if was_created:

@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -30,28 +31,24 @@ from post_comment.views import PostCommentViewSet
 from user_platform.views import UserPlatformViewSet
 
 router = DefaultRouter()
-router.register(r'library', LibrariesViewSet, basename='library')
-router.register(r'platforms', PlatformViewSet, basename='platform')
-router.register(r'game-platforms', GamePlatformViewSet, basename='game-platform')
-router.register(r'game-comments', GameCommentViewSet, basename='game-comment')
-router.register(r'posts', PostViewSet, basename='post')
-router.register(r'post-comments', PostCommentViewSet, basename='post-comment')
-router.register(r'user-platforms', UserPlatformViewSet, basename='user-platform')
+router.register(r"library", LibrariesViewSet, basename="library")
+router.register(r"platforms", PlatformViewSet, basename="platform")
+router.register(r"game-platforms", GamePlatformViewSet, basename="game-platform")
+router.register(r"game-comments", GameCommentViewSet, basename="game-comment")
+router.register(r"posts", PostViewSet, basename="post")
+router.register(r"post-comments", PostCommentViewSet, basename="post-comment")
+router.register(r"user-platforms", UserPlatformViewSet, basename="user-platform")
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    
+    path("admin/", admin.site.urls),
     # Auth & JWT
-    path('api/register/', RegisterView.as_view(), name='register'),
-    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
+    path("api/register/", RegisterView.as_view(), name="register"),
+    path("api/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # Games (ListAPIView)
-    path('api/games/', GameListView.as_view(), name='game-list'),
-    
+    path("api/games/", GameListView.as_view(), name="game-list"),
     # Relacje specyficzne użytkownika
-    path('api/users/', include('user.urls')),
-    
+    path("api/users/", include("user.urls")),
     # Wszystkie zasoby DRF Routera
-    path('api/', include(router.urls)),
+    path("api/", include(router.urls)),
 ]

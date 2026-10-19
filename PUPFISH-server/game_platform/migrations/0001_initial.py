@@ -9,17 +9,36 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('games', '0001_initial'),
-        ('platforms', '0001_initial'),
+        ("games", "0001_initial"),
+        ("platforms", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='GamePlatform',
+            name="GamePlatform",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('game', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='games.game')),
-                ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='platforms.platform')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "game",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="games.game"
+                    ),
+                ),
+                (
+                    "platform",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="platforms.platform",
+                    ),
+                ),
             ],
         ),
     ]

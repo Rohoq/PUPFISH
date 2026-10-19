@@ -25,7 +25,9 @@ def get_twitch_token(client_id: str, client_secret: str) -> str:
     return data["access_token"]
 
 
-def fetch_games_page(token: str, client_id: str, offset: int = 0, limit: int = 100) -> list[dict]:
+def fetch_games_page(
+    token: str, client_id: str, offset: int = 0, limit: int = 100
+) -> list[dict]:
     url = "https://api.igdb.com/v4/games"
     headers = {
         "Client-ID": client_id,
@@ -56,7 +58,9 @@ def fetch_games_page(token: str, client_id: str, offset: int = 0, limit: int = 1
     return data if isinstance(data, list) else []
 
 
-def fetch_platforms_page(token: str, client_id: str, offset: int = 0, limit: int = 100) -> list[dict]:
+def fetch_platforms_page(
+    token: str, client_id: str, offset: int = 0, limit: int = 100
+) -> list[dict]:
     url = "https://api.igdb.com/v4/platforms"
     headers = {
         "Client-ID": client_id,
@@ -102,7 +106,11 @@ def _platform_lookup_from_igdb(platforms: list[dict]) -> dict[int, str]:
     return lookup
 
 
-def _link_game_platforms(game_obj: Game, platform_ids: list[int | str] | None, platform_lookup: dict[int, str]) -> int:
+def _link_game_platforms(
+    game_obj: Game,
+    platform_ids: list[int | str] | None,
+    platform_lookup: dict[int, str],
+) -> int:
     if not platform_ids:
         return 0
 
@@ -118,14 +126,18 @@ def _link_game_platforms(game_obj: Game, platform_ids: list[int | str] | None, p
             continue
 
         platform_obj, _ = Platform.objects.get_or_create(name=platform_name)
-        _, created = GamePlatform.objects.get_or_create(game=game_obj, platform=platform_obj)
+        _, created = GamePlatform.objects.get_or_create(
+            game=game_obj, platform=platform_obj
+        )
         if created:
             linked += 1
 
     return linked
 
 
-def sync_game_platforms(pages: int = 10, limit: int = 100, delay: float = 0.25, progress_callback=None) -> dict:
+def sync_games(
+    pages: int = 100, limit: int = 100, delay: float = 0.25, progress_callback=None
+) -> dict:
     client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
 
@@ -140,72 +152,9 @@ def sync_game_platforms(pages: int = 10, limit: int = 100, delay: float = 0.25, 
         if progress_callback:
             progress_callback(page + 1, pages, platform_offset)
 
-        platform_batch = fetch_platforms_page(token, client_id, offset=platform_offset, limit=limit)
-        if not platform_batch:
-            break
-        platform_lookup.update(_platform_lookup_from_igdb(platform_batch))
-        platform_offset += limit
-        time.sleep(delay)
-
-    total = 0
-    created = 0
-    updated = 0
-    game_offset = 0
-
-    for page in range(pages):
-        if progress_callback:
-            progress_callback(page + 1, pages, game_offset)
-
-        games_batch = fetch_games_page(token, client_id, offset=game_offset, limit=limit)
-        if not games_batch:
-            break
-
-        for item in games_batch:
-            name = item.get("name")
-            if not name:
-                continue
-
-            game_obj, was_created = Game.objects.update_or_create(
-                name=name,
-                defaults={
-                    "release_date": _parse_release_date(item.get("first_release_date")),
-                    "rating": item.get("rating"),
-                    "rating_count": item.get("rating_count", 0) or 0,
-                    "aggregated_rating": item.get("aggregated_rating", 0) or 0,
-                    "aggregated_rating_count": item.get("aggregated_rating_count", 0) or 0,
-                },
-            )
-            total += 1
-
-            if was_created:
-                created += 1
-            else:
-                updated += 1
-
-            _link_game_platforms(game_obj, item.get("platforms"), platform_lookup)
-
-        game_offset += limit
-        time.sleep(delay)
-
-    return {"total": total, "created": created, "updated": updated, "platforms": len(platform_lookup)}
-
-
-def sync_games(pages: int = 100, limit: int = 100, delay: float = 0.25, progress_callback=None) -> dict:
-    client_id = os.getenv("CLIENT_ID")
-    client_secret = os.getenv("CLIENT_SECRET")
-
-    if not client_id or not client_secret:
-        raise ValueError("Missing CLIENT_ID or CLIENT_SECRET environment variables")
-
-    token = get_twitch_token(client_id, client_secret)
-    platform_lookup: dict[int, str] = {}
-    platform_offset = 0
-
-    for page in range(pages):
-        if progress_callback:
-            progress_callback(page + 1, pages, platform_offset)
-
-        platform_batch = fetch_platforms_page(token, client_id, offset=platform_offset, limit=limit)
+        platform_batch = fetch_platforms_page(
+            token, client_id, offset=platform_offset, limit=limit
+        )
         if not platform_batch:
             break
         platform_lookup.update(_platform_lookup_from_igdb(platform_batch))
@@ -237,7 +186,8 @@ def sync_games(pages: int = 100, limit: int = 100, delay: float = 0.25, progress
                     "rating": item.get("rating"),
                     "rating_count": item.get("rating_count", 0) or 0,
                     "aggregated_rating": item.get("aggregated_rating", 0) or 0,
-                    "aggregated_rating_count": item.get("aggregated_rating_count", 0) or 0,
+                    "aggregated_rating_count": item.get("aggregated_rating_count", 0)
+                    or 0,
                 },
             )
 
@@ -252,4 +202,18 @@ def sync_games(pages: int = 100, limit: int = 100, delay: float = 0.25, progress
         offset += limit
         time.sleep(delay)
 
-    return {"total": total, "created": created, "updated": updated, "platforms": len(platform_lookup)}
+    return {
+        "total": total,
+        "created": created,
+        "updated": updated,
+        "platforms": len(platform_lookup),
+    }
+
+
+def sync_game_platforms(
+    pages: int = 10, limit: int = 100, delay: float = 0.25, progress_callback=None
+) -> dict:
+    """Sync game platforms using sync_games with a default of 10 pages."""
+    return sync_games(
+        pages=pages, limit=limit, delay=delay, progress_callback=progress_callback
+    )
