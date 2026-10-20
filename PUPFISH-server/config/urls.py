@@ -21,7 +21,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from user.views import RegisterView
-from games.views import GameListView
+from games.views import GameListView, GameThumbnailView
 from libraries.views import LibrariesViewSet
 from platforms.views import PlatformViewSet
 from game_platform.views import GamePlatformViewSet
@@ -45,8 +45,18 @@ urlpatterns = [
     path("api/register/", RegisterView.as_view(), name="register"),
     path("api/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # Games (ListAPIView)
+    # Games (ListAPIView & Thumbnail)
     path("api/games/", GameListView.as_view(), name="game-list"),
+    path(
+        "api/games/<int:pk>/thumbnail/",
+        GameThumbnailView.as_view(),
+        name="game-thumbnail",
+    ),
+    path(
+        "api/games/thumbnail/",
+        GameThumbnailView.as_view(),
+        name="game-thumbnail-query",
+    ),
     # Relacje specyficzne użytkownika
     path("api/users/", include("user.urls")),
     # Wszystkie zasoby DRF Routera

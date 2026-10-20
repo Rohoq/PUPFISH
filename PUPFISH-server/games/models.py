@@ -9,6 +9,7 @@ class Game(models.Model):
     aggregated_rating = models.FloatField(default=0)
     aggregated_rating_count = models.IntegerField(default=0)
     steam_app_id = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    cover_url = models.URLField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return self.name

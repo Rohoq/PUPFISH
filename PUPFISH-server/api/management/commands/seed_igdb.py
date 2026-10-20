@@ -6,7 +6,11 @@ import os
 from datetime import datetime, timezone
 import time
 
-from games.services.igdb import get_twitch_token
+from games.services.igdb import (
+    get_twitch_token,
+    get_igdb_image_url,
+    extract_steam_app_id,
+)
 
 
 # ---------------------------
@@ -27,7 +31,13 @@ def fetch_games(token, client_id, offset=0, limit=100):
         rating,
         rating_count,
         aggregated_rating,
-        aggregated_rating_count;
+        aggregated_rating_count,
+        cover.image_id,
+        cover.url,
+        external_games.category,
+        external_games.external_game_source,
+        external_games.uid,
+        external_games.url;
     
     where game_type = 0;
     
@@ -52,6 +62,20 @@ def fetch_games(token, client_id, offset=0, limit=100):
 class Command(BaseCommand):
     help = "Seed games from IGDB"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--pages",
+            type=int,
+            default=100,
+            help="Number of pages to fetch (default: 100)",
+        )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=100,
+            help="Games per page (default: 100)",
+        )
+
     def handle(self, *args, **kwargs):
 
         client_id = os.getenv("CLIENT_ID")
@@ -67,10 +91,8 @@ class Command(BaseCommand):
         all_games = []
 
         offset = 0
-        limit = 100
-
-        # Liczba stron
-        pages = 100
+        limit = kwargs.get("limit") or 100
+        pages = kwargs.get("pages") or 100
 
         for i in range(pages):
 
@@ -122,6 +144,14 @@ class Command(BaseCommand):
             # ---------------------------
             # Save
             # ---------------------------
+            cover_data = g.get("cover")
+            cover_url = (
+                get_igdb_image_url(cover_data, token=token, client_id=client_id)
+                if cover_data
+                else None
+            )
+            steam_app_id = extract_steam_app_id(g.get("external_games"))
+
             obj, was_created = Game.objects.update_or_create(
                 name=name,
                 defaults={
@@ -130,6 +160,8 @@ class Command(BaseCommand):
                     "rating_count": rating_count,
                     "aggregated_rating": aggregated_rating or 0,
                     "aggregated_rating_count": aggregated_rating_count,
+                    "cover_url": cover_url,
+                    "steam_app_id": steam_app_id,
                 },
             )
 
