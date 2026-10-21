@@ -33,7 +33,10 @@ class GameService {
     return res;
   }
 
-  Future<http.Response> _authenticatedPost(Uri uri, Map<String, dynamic> body) async {
+  Future<http.Response> _authenticatedPost(
+    Uri uri,
+    Map<String, dynamic> body,
+  ) async {
     String? token = await _authService.getToken();
     var res = await http.post(
       uri,
@@ -60,6 +63,36 @@ class GameService {
     return res;
   }
 
+  Future<http.Response> _authenticatedPatch(
+    Uri uri,
+    Map<String, dynamic> body,
+  ) async {
+    final token = await _authService.getToken();
+    var response = await http.patch(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 401) {
+      final newToken = await _authService.refreshToken();
+      if (newToken != null) {
+        response = await http.patch(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $newToken',
+          },
+          body: jsonEncode(body),
+        );
+      }
+    }
+    return response;
+  }
+
   Future<Map<String, dynamic>> getGames({
     int page = 1,
     String search = '',
@@ -82,15 +115,34 @@ class GameService {
   }
 
   Future<void> addToLibrary(int gameId) async {
-    final res = await _authenticatedPost(
-      Uri.parse('$baseUrl/library/'),
-      {'game': gameId},
-    );
+    final res = await _authenticatedPost(Uri.parse('$baseUrl/library/'), {
+      'game': gameId,
+    });
 
     debugPrint('ADD LIBRARY: ${res.statusCode}');
 
     if (res.statusCode != 201) {
       throw Exception('Błąd dodawania gry: ${res.statusCode} ${res.body}');
+    }
+  }
+
+  Future<void> updateLibraryEntry(
+    int entryId,
+    Map<String, dynamic> changes,
+  ) async {
+    if (changes.isEmpty) {
+      throw ArgumentError('Podaj status lub ocenę do aktualizacji.');
+    }
+
+    final response = await _authenticatedPatch(
+      Uri.parse('$baseUrl/library/$entryId/'),
+      changes,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Błąd aktualizacji gry: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
@@ -107,6 +159,8 @@ class GameService {
       return data;
     }
 
-    throw Exception('Błąd pobierania biblioteki: ${res.statusCode} ${res.body}');
+    throw Exception(
+      'Błąd pobierania biblioteki: ${res.statusCode} ${res.body}',
+    );
   }
 }
