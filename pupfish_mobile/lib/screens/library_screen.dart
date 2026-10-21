@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/game_service.dart';
+import '../widgets/game_cover.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -28,16 +29,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
     try {
       final games = await _gameService.getMyLibrary();
 
+      if (!mounted) return;
       setState(() {
         _games = games;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
       });
-
-      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -53,42 +54,113 @@ class _LibraryScreenState extends State<LibraryScreen> {
       appBar: AppBar(
         title: const Text('Moja biblioteka'),
       ),
-
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : _games.isEmpty
-              ? const Center(
-                  child: Text('Twoja biblioteka jest pusta'),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadLibrary,
-                  child: ListView.builder(
-                    itemCount: _games.length,
-                    itemBuilder: (context, index) {
-                      final game = _games[index];
-
-                      return ListTile(
-                        leading: const Icon(
-                          Icons.videogame_asset,
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadLibrary,
+              child: _games.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        const SizedBox(height: 120),
+                        const Icon(
+                          Icons.collections_bookmark_outlined,
+                          color: Color(0xFF20A894),
+                          size: 52,
                         ),
-
-                        title: Text(
-                          game['game_name'] ?? 'Brak nazwy',
+                        const SizedBox(height: 16),
+                        const Center(
+                          child: Text(
+                            'Twoja biblioteka jest jeszcze pusta',
+                            style: TextStyle(
+                              color: Color(0xFF17283F),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 17,
+                            ),
+                          ),
                         ),
-
-                        subtitle: Text(
-                          game['game_release_date'] ?? '',
+                        const SizedBox(height: 8),
+                        const Center(
+                          child: Text(
+                            'Dodaj gry, które chcesz mieć pod ręką.',
+                            style: TextStyle(color: Color(0xFF728092)),
+                          ),
                         ),
-
-                        trailing: Text(
-                          game['state'] ?? '',
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                      ],
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: _games.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final game = _games[index] as Map<String, dynamic>;
+                        final state = game['state'] as String?;
+                        return Card(
+                          clipBehavior: Clip.antiAlias,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                GameCover(
+                                  url: game['game_cover_url'] as String? ??
+                                      game['cover_url'] as String?,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        game['game_name'] as String? ??
+                                            'Bez nazwy',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFF17283F),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 7),
+                                      Text(
+                                        'Premiera: ${game['game_release_date'] ?? 'brak danych'}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF728092),
+                                        ),
+                                      ),
+                                      if (state != null && state.isNotEmpty) ...[
+                                        const SizedBox(height: 9),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE7F4F1),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            state,
+                                            style: const TextStyle(
+                                              color: Color(0xFF168A83),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
     );
   }
 }
