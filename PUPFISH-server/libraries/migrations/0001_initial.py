@@ -9,17 +9,40 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('games', '0001_initial'),
+        ("games", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='GamesLibrary',
+            name="GamesLibrary",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rating', models.IntegerField(blank=True, null=True)),
-                ('state', models.CharField(choices=[('playing', 'Playing'), ('completed', 'Completed'), ('dropped', 'Dropped')], max_length=20)),
-                ('game', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='games.game')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("rating", models.IntegerField(blank=True, null=True)),
+                (
+                    "state",
+                    models.CharField(
+                        choices=[
+                            ("playing", "Playing"),
+                            ("completed", "Completed"),
+                            ("dropped", "Dropped"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "game",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="games.game"
+                    ),
+                ),
             ],
         ),
     ]

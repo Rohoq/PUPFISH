@@ -7,14 +7,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0001_initial'),
-        ('libraries', '0002_initial'),
+        ("games", "0001_initial"),
+        ("libraries", "0002_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='gameslibrary',
-            constraint=models.UniqueConstraint(fields=('user', 'game'), name='unique_user_game'),
+            model_name="gameslibrary",
+            constraint=models.UniqueConstraint(
+                fields=("user", "game"), name="unique_user_game"
+            ),
         ),
     ]

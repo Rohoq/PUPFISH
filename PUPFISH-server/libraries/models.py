@@ -2,41 +2,23 @@ from django.conf import settings
 from django.db import models
 
 
-
-
 class GamesLibrary(models.Model):
 
     STATUS_CHOICES = [
-        ('playing', 'Playing'),
-        ('completed', 'Completed'),
-        ('dropped', 'Dropped'),
+        ("playing", "Playing"),
+        ("completed", "Completed"),
+        ("dropped", "Dropped"),
     ]
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    game = models.ForeignKey(
-        'games.Game',
-        on_delete=models.CASCADE
-    )
+    game = models.ForeignKey("games.Game", on_delete=models.CASCADE)
 
-    rating = models.IntegerField(
-        null=True,
-        blank=True
-    )
+    rating = models.IntegerField(null=True, blank=True)
 
-    state = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='playing'
-    )
+    state = models.CharField(max_length=20, choices=STATUS_CHOICES, default="playing")
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["user", "game"],
-                name="unique_user_game"
-            )
+            models.UniqueConstraint(fields=["user", "game"], name="unique_user_game")
         ]

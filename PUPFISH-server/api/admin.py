@@ -9,7 +9,6 @@ from libraries.models import GamesLibrary
 from user.models import User
 from user_platform.models import UserPlatform
 
-
 admin.site.register(Game)
 admin.site.register(Platform)
 admin.site.register(User)

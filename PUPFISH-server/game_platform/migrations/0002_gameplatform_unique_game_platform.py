@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('game_platform', '0001_initial'),
-        ('games', '0004_game_steam_app_id'),
-        ('platforms', '0002_alter_platform_name'),
+        ("game_platform", "0001_initial"),
+        ("games", "0004_game_steam_app_id"),
+        ("platforms", "0002_alter_platform_name"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='gameplatform',
-            constraint=models.UniqueConstraint(fields=('game', 'platform'), name='unique_game_platform'),
+            model_name="gameplatform",
+            constraint=models.UniqueConstraint(
+                fields=("game", "platform"), name="unique_game_platform"
+            ),
         ),
     ]

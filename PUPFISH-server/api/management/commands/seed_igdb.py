@@ -3,29 +3,14 @@ from games.models import Game
 
 import requests
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 
-
-# ---------------------------
-# Twitch token
-# ---------------------------
-def get_twitch_token(client_id, client_secret):
-    url = "https://id.twitch.tv/oauth2/token"
-
-    data = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "grant_type": "client_credentials",
-    }
-
-    r = requests.post(url, data=data)
-    data = r.json()
-
-    if "access_token" not in data:
-        raise Exception(f"Twitch auth failed: {data}")
-
-    return data["access_token"]
+from games.services.igdb import (
+    get_twitch_token,
+    get_igdb_image_url,
+    extract_steam_app_id,
+)
 
 
 # ---------------------------
@@ -46,7 +31,13 @@ def fetch_games(token, client_id, offset=0, limit=100):
         rating,
         rating_count,
         aggregated_rating,
-        aggregated_rating_count;
+        aggregated_rating_count,
+        cover.image_id,
+        cover.url,
+        external_games.category,
+        external_games.external_game_source,
+        external_games.uid,
+        external_games.url;
     
     where game_type = 0;
     
@@ -71,6 +62,20 @@ def fetch_games(token, client_id, offset=0, limit=100):
 class Command(BaseCommand):
     help = "Seed games from IGDB"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--pages",
+            type=int,
+            default=100,
+            help="Number of pages to fetch (default: 100)",
+        )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=100,
+            help="Games per page (default: 100)",
+        )
+
     def handle(self, *args, **kwargs):
 
         client_id = os.getenv("CLIENT_ID")
@@ -81,31 +86,19 @@ class Command(BaseCommand):
 
         self.stdout.write("Pobieram token...")
 
-        token = get_twitch_token(
-            client_id,
-            client_secret
-        )
+        token = get_twitch_token(client_id, client_secret)
 
         all_games = []
 
         offset = 0
-        limit = 100
-
-        # Liczba stron
-        pages = 100
+        limit = kwargs.get("limit") or 100
+        pages = kwargs.get("pages") or 100
 
         for i in range(pages):
 
-            self.stdout.write(
-                f"Pobieram offset {offset}..."
-            )
+            self.stdout.write(f"Pobieram offset {offset}...")
 
-            games = fetch_games(
-                token,
-                client_id,
-                offset,
-                limit
-            )
+            games = fetch_games(token, client_id, offset, limit)
 
             if not games:
                 break
@@ -133,7 +126,7 @@ class Command(BaseCommand):
 
             if ts:
                 try:
-                    release_date = datetime.utcfromtimestamp(ts).date()
+                    release_date = datetime.fromtimestamp(ts, tz=timezone.utc).date()
                 except (ValueError, OSError, OverflowError):
                     release_date = datetime(1970, 1, 1).date()
             else:
@@ -146,14 +139,19 @@ class Command(BaseCommand):
             rating_count = g.get("rating_count", 0)
 
             aggregated_rating = g.get("aggregated_rating")
-            aggregated_rating_count = g.get(
-                "aggregated_rating_count",
-                0
-            )
+            aggregated_rating_count = g.get("aggregated_rating_count", 0)
 
             # ---------------------------
             # Save
             # ---------------------------
+            cover_data = g.get("cover")
+            cover_url = (
+                get_igdb_image_url(cover_data, token=token, client_id=client_id)
+                if cover_data
+                else None
+            )
+            steam_app_id = extract_steam_app_id(g.get("external_games"))
+
             obj, was_created = Game.objects.update_or_create(
                 name=name,
                 defaults={
@@ -162,7 +160,9 @@ class Command(BaseCommand):
                     "rating_count": rating_count,
                     "aggregated_rating": aggregated_rating or 0,
                     "aggregated_rating_count": aggregated_rating_count,
-                }
+                    "cover_url": cover_url,
+                    "steam_app_id": steam_app_id,
+                },
             )
 
             if was_created:

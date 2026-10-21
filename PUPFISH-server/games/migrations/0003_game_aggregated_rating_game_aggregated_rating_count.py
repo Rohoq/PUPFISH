@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('games', '0002_game_rating_game_rating_count'),
+        ("games", "0002_game_rating_game_rating_count"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='game',
-            name='aggregated_rating',
+            model_name="game",
+            name="aggregated_rating",
             field=models.FloatField(default=0),
         ),
         migrations.AddField(
-            model_name='game',
-            name='aggregated_rating_count',
+            model_name="game",
+            name="aggregated_rating_count",
             field=models.IntegerField(default=0),
         ),
     ]

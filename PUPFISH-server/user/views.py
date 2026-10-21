@@ -8,17 +8,16 @@ from libraries.serializers import LibrariesSerializer
 
 User = get_user_model()
 
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
 
+
 class UserLibraryView(ListAPIView):
     serializer_class = LibrariesSerializer
     permission_classes = [AllowAny]
-    
+
     def get_queryset(self):
-        return GamesLibrary.objects.filter(
-            user_id=self.kwargs["id"]
-            
-        )
+        return GamesLibrary.objects.filter(user_id=self.kwargs["id"])

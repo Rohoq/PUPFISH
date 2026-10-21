@@ -6,91 +6,91 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0002_rename_realese_date_game_release_date'),
+        ("api", "0002_rename_realese_date_game_release_date"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='gamecomment',
-            name='game',
+            model_name="gamecomment",
+            name="game",
         ),
         migrations.RemoveField(
-            model_name='post',
-            name='game',
+            model_name="post",
+            name="game",
         ),
         migrations.RemoveField(
-            model_name='gameplatform',
-            name='game',
+            model_name="gameplatform",
+            name="game",
         ),
         migrations.RemoveField(
-            model_name='gameslibrary',
-            name='game',
+            model_name="gameslibrary",
+            name="game",
         ),
         migrations.RemoveField(
-            model_name='gamecomment',
-            name='user',
+            model_name="gamecomment",
+            name="user",
         ),
         migrations.RemoveField(
-            model_name='gameplatform',
-            name='platform',
+            model_name="gameplatform",
+            name="platform",
         ),
         migrations.RemoveField(
-            model_name='gameslibrary',
-            name='user',
+            model_name="gameslibrary",
+            name="user",
         ),
         migrations.RemoveField(
-            model_name='userplatform',
-            name='platform',
+            model_name="userplatform",
+            name="platform",
         ),
         migrations.RemoveField(
-            model_name='post',
-            name='user',
+            model_name="post",
+            name="user",
         ),
         migrations.RemoveField(
-            model_name='postcomment',
-            name='post',
+            model_name="postcomment",
+            name="post",
         ),
         migrations.RemoveField(
-            model_name='postcomment',
-            name='user',
+            model_name="postcomment",
+            name="user",
         ),
         migrations.RemoveField(
-            model_name='user',
-            name='groups',
+            model_name="user",
+            name="groups",
         ),
         migrations.RemoveField(
-            model_name='user',
-            name='user_permissions',
+            model_name="user",
+            name="user_permissions",
         ),
         migrations.RemoveField(
-            model_name='userplatform',
-            name='user',
+            model_name="userplatform",
+            name="user",
         ),
         migrations.DeleteModel(
-            name='Game',
+            name="Game",
         ),
         migrations.DeleteModel(
-            name='GameComment',
+            name="GameComment",
         ),
         migrations.DeleteModel(
-            name='GamePlatform',
+            name="GamePlatform",
         ),
         migrations.DeleteModel(
-            name='GamesLibrary',
+            name="GamesLibrary",
         ),
         migrations.DeleteModel(
-            name='Platform',
+            name="Platform",
         ),
         migrations.DeleteModel(
-            name='Post',
+            name="Post",
         ),
         migrations.DeleteModel(
-            name='PostComment',
+            name="PostComment",
         ),
         migrations.DeleteModel(
-            name='User',
+            name="User",
         ),
         migrations.DeleteModel(
-            name='UserPlatform',
+            name="UserPlatform",
         ),
     ]

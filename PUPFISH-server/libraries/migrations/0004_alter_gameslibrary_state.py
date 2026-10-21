@@ -6,13 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('libraries', '0003_gameslibrary_unique_user_game'),
+        ("libraries", "0003_gameslibrary_unique_user_game"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='gameslibrary',
-            name='state',
-            field=models.CharField(choices=[('playing', 'Playing'), ('completed', 'Completed'), ('dropped', 'Dropped')], default='playing', max_length=20),
+            model_name="gameslibrary",
+            name="state",
+            field=models.CharField(
+                choices=[
+                    ("playing", "Playing"),
+                    ("completed", "Completed"),
+                    ("dropped", "Dropped"),
+                ],
+                default="playing",
+                max_length=20,
+            ),
         ),
     ]
