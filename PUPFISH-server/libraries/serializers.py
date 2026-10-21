@@ -9,6 +9,10 @@ class LibrariesSerializer(serializers.ModelSerializer):
         source="game.release_date", read_only=True
     )
 
+    game_cover_url = serializers.URLField(
+        source="game.cover_url", read_only=True, allow_null=True
+    )
+
     class Meta:
         model = GamesLibrary
         fields = [
@@ -17,6 +21,7 @@ class LibrariesSerializer(serializers.ModelSerializer):
             "game",
             "game_name",
             "game_release_date",
+            "game_cover_url",
             "rating",
             "state",
         ]
@@ -26,4 +31,5 @@ class LibrariesSerializer(serializers.ModelSerializer):
             "user",
             "game_name",
             "game_release_date",
+            "game_cover_url",
         ]

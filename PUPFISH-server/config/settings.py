@@ -32,6 +32,10 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "192.168.2.186",
+] + [
+    host.strip()
+    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if host.strip()
 ]
 
 
@@ -153,6 +157,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CORS_ALLOWED_ORIGIN_REGEXES", "").split(",")
+    if origin.strip()
 ]
 
 # Static files (CSS, JavaScript, Images)

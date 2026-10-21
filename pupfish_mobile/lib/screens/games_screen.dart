@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/game_service.dart';
 import './game_details_screen.dart';
+import '../widgets/game_cover.dart';
 
 class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key});
@@ -37,6 +38,7 @@ class _GamesScreenState extends State<GamesScreen> {
         search: _searchController.text,
       );
 
+      if (!mounted) return;
       setState(() {
         _games = data['results'] ?? [];
 
@@ -48,11 +50,10 @@ class _GamesScreenState extends State<GamesScreen> {
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
       });
-
-      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -97,108 +98,218 @@ class _GamesScreenState extends State<GamesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gry'),
+        title: const Text('Odkrywaj gry'),
       ),
-
       body: Column(
         children: [
-          // WYSZUKIWANIE
           Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Szukaj gry...',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    onSubmitted: (_) => _search(),
-                  ),
+                Text(
+                  'Znajdź swoją następną grę',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color(0xFF17283F),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-
-                const SizedBox(width: 8),
-
-                ElevatedButton(
-                  onPressed: _search,
-                  child: const Text('Szukaj'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _searchController,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _search(),
+                  decoration: InputDecoration(
+                    hintText: 'Szukaj po nazwie',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      tooltip: 'Szukaj',
+                      onPressed: _search,
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-
-          // LISTA GIER
           Expanded(
             child: _loading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : _games.isEmpty
-                    ? const Center(
-                        child: Text('Brak gier'),
-                      )
-                    : ListView.builder(
-                        itemCount: _games.length,
-                        itemBuilder: (context, index) {
-                          final game = _games[index];
-
-                          return ListTile(
-                            title: Text(
-                              game['name'] ?? 'Brak nazwy',
-                            ),
-                            subtitle: Text(
-                              game['release_date'] ?? '',
-                            ),
-                            onTap: () {
-                              Navigator.push(
+                    ? _EmptyGames(onRetry: _loadGames)
+                    : RefreshIndicator(
+                        onRefresh: _loadGames,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                          itemCount: _games.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final game =
+                                _games[index] as Map<String, dynamic>;
+                            return _GameCard(
+                              game: game,
+                              onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      GameDetailsScreen(
-                                    game: game,
-                                  ),
+                                  builder: (_) =>
+                                      GameDetailsScreen(game: game),
                                 ),
-                              );
-                            },
-                          );
-                        },
+                              ),
+                            );
+                          },
+                        ),
                       ),
           ),
-
-          // PAGINACJA
           if (!_loading && _games.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton(
+                  IconButton.filledTonal(
+                    tooltip: 'Poprzednia strona',
+                    onPressed: _currentPage > 1 ? _previousPage : null,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Text(
+                      '$_currentPage / $_totalPages',
+                      style: const TextStyle(
+                        color: Color(0xFF17283F),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton.filledTonal(
+                    tooltip: 'Następna strona',
                     onPressed:
-                        _currentPage > 1 ? _previousPage : null,
-                    child: const Text('←'),
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  Text(
-                    'Strona $_currentPage / $_totalPages',
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  ElevatedButton(
-                    onPressed: _currentPage < _totalPages
-                        ? _nextPage
-                        : null,
-                    child: const Text('→'),
+                        _currentPage < _totalPages ? _nextPage : null,
+                    icon: const Icon(Icons.chevron_right),
                   ),
                 ],
               ),
             ),
         ],
       ),
+    );
+  }
+}
+
+class _GameCard extends StatelessWidget {
+  const _GameCard({required this.game, required this.onTap});
+
+  final Map<String, dynamic> game;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = game['rating'];
+    final ratingLabel = rating == null
+        ? 'Brak oceny'
+        : 'Ocena ${rating is num ? rating.toStringAsFixed(1) : rating}';
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              GameCover(url: game['cover_url'] as String?),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      game['name'] as String? ?? 'Bez nazwy',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF17283F),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Premiera: ${game['release_date'] ?? 'brak danych'}',
+                      style: const TextStyle(color: Color(0xFF728092)),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          color: Color(0xFFF2AE43),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          ratingLabel,
+                          style: const TextStyle(
+                            color: Color(0xFF728092),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Color(0xFF728092)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyGames extends StatelessWidget {
+  const _EmptyGames({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 90),
+        const Icon(
+          Icons.search_off_rounded,
+          color: Color(0xFF20A894),
+          size: 48,
+        ),
+        const SizedBox(height: 12),
+        const Center(
+          child: Text(
+            'Nie znaleziono gier',
+            style: TextStyle(
+              color: Color(0xFF17283F),
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Center(
+          child: Text(
+            'Spróbuj zmienić wyszukiwaną frazę.',
+            style: TextStyle(color: Color(0xFF728092)),
+          ),
+        ),
+        Center(
+          child: TextButton(
+            onPressed: onRetry,
+            child: const Text('Pokaż ponownie'),
+          ),
+        ),
+      ],
     );
   }
 }
