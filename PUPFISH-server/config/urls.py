@@ -21,7 +21,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from user.views import RegisterView
-from games.views import GameListView, GameThumbnailView
+from games.views import GameListView, GameNewsView, GameThumbnailView
 from libraries.views import LibrariesViewSet
 from platforms.views import PlatformViewSet
 from game_platform.views import GamePlatformViewSet
@@ -47,6 +47,7 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # Games (ListAPIView & Thumbnail)
     path("api/games/", GameListView.as_view(), name="game-list"),
+    path("api/games/<int:pk>/news/", GameNewsView.as_view(), name="game-news"),
     path(
         "api/games/<int:pk>/thumbnail/",
         GameThumbnailView.as_view(),
