@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from .models import Game
 from .serializers import GameSerializer
 from .services.igdb import fetch_game_cover_from_igdb, fetch_game_metadata_from_igdb
+from .services.steam import fetch_game_news
 
 
 class GameListView(generics.ListAPIView):
@@ -18,6 +19,47 @@ class GameListView(generics.ListAPIView):
 
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]
+
+
+class GameNewsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        game = get_object_or_404(Game, pk=pk)
+        if not game.steam_app_id:
+            return Response(
+                {"detail": "Ta gra nie ma przypisanego Steam App ID."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            count = int(request.query_params.get("count", "10"))
+        except ValueError:
+            return Response(
+                {"detail": "Parametr 'count' musi być liczbą od 1 do 100."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not 1 <= count <= 100:
+            return Response(
+                {"detail": "Parametr 'count' musi być liczbą od 1 do 100."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            news = fetch_game_news(game.steam_app_id, count=count)
+        except (requests.RequestException, ValueError):
+            return Response(
+                {"detail": "Nie udało się pobrać newsów ze Steam."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                "game": game.name,
+                "steam_app_id": game.steam_app_id,
+                "news": news,
+            }
+        )
 
 
 class GameThumbnailView(APIView):

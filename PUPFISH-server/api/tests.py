@@ -1,4 +1,5 @@
 import os
+import requests
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -10,6 +11,7 @@ from games.services.igdb import (
     sync_game_platforms,
     extract_steam_app_id,
 )
+from games.services.steam import STEAM_NEWS_URL, fetch_game_news
 from platforms.models import Platform
 
 
@@ -229,3 +231,88 @@ class SteamAppIdTests(TestCase):
             game.cover_url,
             "https://images.igdb.com/igdb/image/upload/t_cover_big/co1r7f.jpg",
         )
+
+
+class GameNewsTests(TestCase):
+    def setUp(self):
+        self.game = Game.objects.create(
+            name="Steam Game",
+            release_date="2020-01-01",
+            steam_app_id="12345",
+        )
+
+    @patch("games.views.fetch_game_news")
+    def test_game_news_returns_steam_news_without_persisting_it(self, mock_fetch):
+        mock_fetch.return_value = [{"title": "Update"}]
+
+        response = self.client.get(f"/api/games/{self.game.pk}/news/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["news"], [{"title": "Update"}])
+        mock_fetch.assert_called_once_with("12345", count=10)
+
+    @patch("games.views.fetch_game_news")
+    def test_game_news_accepts_count_query_parameter(self, mock_fetch):
+        mock_fetch.return_value = []
+
+        response = self.client.get(f"/api/games/{self.game.pk}/news/?count=25")
+
+        self.assertEqual(response.status_code, 200)
+        mock_fetch.assert_called_once_with("12345", count=25)
+
+    @patch("games.views.fetch_game_news")
+    def test_game_news_rejects_invalid_count(self, mock_fetch):
+        response = self.client.get(f"/api/games/{self.game.pk}/news/?count=101")
+
+        self.assertEqual(response.status_code, 400)
+        mock_fetch.assert_not_called()
+
+    @patch("games.views.fetch_game_news", side_effect=requests.Timeout)
+    def test_game_news_reports_steam_failure(self, mock_fetch):
+        response = self.client.get(f"/api/games/{self.game.pk}/news/")
+
+        self.assertEqual(response.status_code, 502)
+        mock_fetch.assert_called_once_with("12345", count=10)
+        self.assertEqual(
+            response.json()["detail"], "Nie udało się pobrać newsów ze Steam."
+        )
+
+    def test_game_without_steam_id_has_no_news_endpoint(self):
+        self.game.steam_app_id = None
+        self.game.save(update_fields=["steam_app_id"])
+
+        response = self.client.get(f"/api/games/{self.game.pk}/news/")
+
+        self.assertEqual(response.status_code, 404)
+
+
+class ScheduledGameSyncTests(TestCase):
+    @patch("games.tasks.sync_games", return_value={"total": 1})
+    def test_celery_task_runs_existing_igdb_sync(self, mock_sync):
+        from games.tasks import sync_games_from_igdb
+
+        self.assertEqual(sync_games_from_igdb.run(), {"total": 1})
+        mock_sync.assert_called_once_with()
+
+
+class SteamNewsServiceTests(TestCase):
+    @patch("games.services.steam.requests.get")
+    def test_fetch_game_news_calls_steam_api(self, mock_get):
+        mock_get.return_value.json.return_value = {
+            "appnews": {"newsitems": [{"title": "Update"}]}
+        }
+
+        news = fetch_game_news("12345", count=25)
+
+        self.assertEqual(news, [{"title": "Update"}])
+        mock_get.assert_called_once_with(
+            STEAM_NEWS_URL,
+            params={"appid": "12345", "count": 25, "maxlength": 300},
+            timeout=10,
+        )
+
+    @patch("games.services.steam.requests.get")
+    def test_fetch_game_news_rejects_non_numeric_app_id(self, mock_get):
+        with self.assertRaises(ValueError):
+            fetch_game_news("not-an-app-id")
+        mock_get.assert_not_called()

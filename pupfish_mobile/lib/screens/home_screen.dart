@@ -3,6 +3,8 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'games_screen.dart';
 import 'library_screen.dart';
+import 'posts_screen.dart';
+import 'platforms_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -145,6 +147,26 @@ class HomeScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const LibraryScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _DestinationCard(
+              icon: Icons.forum_outlined,
+              title: 'Dyskusje i posty',
+              subtitle: 'Rozmawiaj o grach ze społecznością',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PostsScreen()),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _DestinationCard(
+              icon: Icons.sports_esports_outlined,
+              title: 'Moje platformy',
+              subtitle: 'Zarządzaj swoimi platformami do grania',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PlatformsScreen()),
               ),
             ),
           ],

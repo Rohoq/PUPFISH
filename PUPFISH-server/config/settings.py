@@ -14,6 +14,7 @@ import os
 import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,8 +30,10 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 
 ALLOWED_HOSTS = [
+    "*",
     "localhost",
     "127.0.0.1",
+    "192.168.0.10",
     "192.168.2.186",
 ] + [
     host.strip()
@@ -151,6 +154,16 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "sync-games-from-igdb-daily": {
+        "task": "games.tasks.sync_games_from_igdb",
+        "schedule": crontab(hour=2, minute=0),
+    },
+}
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
