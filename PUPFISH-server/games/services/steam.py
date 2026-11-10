@@ -10,7 +10,7 @@ def fetch_game_news(steam_app_id: str, count: int = 10) -> list[dict]:
 
     response = requests.get(
         STEAM_NEWS_URL,
-        params={"appid": steam_app_id, "count": count, "maxlength": 300},
+        params={"appid": steam_app_id, "count": count, "maxlength": 10000},
         timeout=10,
     )
     response.raise_for_status()

@@ -307,7 +307,7 @@ class SteamNewsServiceTests(TestCase):
         self.assertEqual(news, [{"title": "Update"}])
         mock_get.assert_called_once_with(
             STEAM_NEWS_URL,
-            params={"appid": "12345", "count": 25, "maxlength": 300},
+            params={"appid": "12345", "count": 25, "maxlength": 10000},
             timeout=10,
         )
 

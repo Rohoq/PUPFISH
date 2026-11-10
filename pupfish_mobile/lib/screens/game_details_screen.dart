@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/game_service.dart';
 import '../widgets/game_cover.dart';
+import '../widgets/steam_news_card.dart';
 import 'posts_screen.dart';
+import 'steam_news_detail_screen.dart';
 
 class GameDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> game;
 
-  const GameDetailsScreen({
-    super.key,
-    required this.game,
-  });
+  const GameDetailsScreen({super.key, required this.game});
 
   @override
   State<GameDetailsScreen> createState() => _GameDetailsScreenState();
@@ -112,9 +111,9 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Błąd: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Błąd: $e')));
     } finally {
       if (mounted) setState(() => _adding = false);
     }
@@ -132,9 +131,9 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
       await _loadComments();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Błąd dodawania komentarza: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Błąd dodawania komentarza: $e')));
     } finally {
       if (mounted) setState(() => _submittingComment = false);
     }
@@ -195,9 +194,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
     final gameTitle = game['name'] as String? ?? 'Gra';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(gameTitle),
-      ),
+      appBar: AppBar(title: Text(gameTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -214,9 +211,9 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
             Text(
               gameTitle,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: const Color(0xFF17283F),
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: const Color(0xFF17283F),
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 18),
             Card(
@@ -257,9 +254,7 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                       ),
                     )
                   : const Icon(Icons.add_rounded),
-              label: Text(
-                _adding ? 'Dodawanie...' : 'Dodaj do biblioteki',
-              ),
+              label: Text(_adding ? 'Dodawanie...' : 'Dodaj do biblioteki'),
             ),
 
             const SizedBox(height: 12),
@@ -268,10 +263,8 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PostsScreen(
-                      gameId: _gameId,
-                      gameTitle: gameTitle,
-                    ),
+                    builder: (_) =>
+                        PostsScreen(gameId: _gameId, gameTitle: gameTitle),
                   ),
                 );
               },
@@ -292,9 +285,9 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
             Text(
               'Komentarze społeczności (${_comments.length})',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF17283F),
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: const Color(0xFF17283F),
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 12),
             _buildCommentsSection(),
@@ -304,9 +297,9 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
             Text(
               'Aktualności ze Steam',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF17283F),
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: const Color(0xFF17283F),
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 12),
             _buildNewsSection(),
@@ -541,50 +534,20 @@ class _GameDetailsScreenState extends State<GameDetailsScreen> {
 
     return Column(
       children: _news.map<Widget>((item) {
-        final title = item['title'] as String? ?? '';
-        final contents = item['contents'] as String? ?? '';
-        final author = item['author'] as String? ?? '';
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: Color(0xFF17283F),
-                  ),
+        final newsItem = Map<String, dynamic>.from(item as Map);
+        return SteamNewsCard(
+          news: newsItem,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) => SteamNewsDetailScreen(
+                  news: newsItem,
+                  gameName: widget.game['name'] as String? ?? '',
                 ),
-                if (author.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    author,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-                if (contents.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    contents,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       }).toList(),
     );
